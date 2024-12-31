@@ -4,7 +4,7 @@
 
 image:
   repository: 111815285043.dkr.ecr.ap-northeast-1.amazonaws.com/aws-gateway-controller
-  tag: 82cc2b2da08e9eb7e605ac103c034cfd81b2ac74
+  tag: latest
   pullPolicy: Always
   pullSecrets: []
 
