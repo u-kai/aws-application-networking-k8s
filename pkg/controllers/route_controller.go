@@ -95,30 +95,33 @@ func RegisterAllRouteControllers(
 	}{
 		{core.HttpRouteType, &gwv1.HTTPRoute{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "gateway.networking.k8s.io/v1",
+				APIVersion: gwv1.GroupVersion.String(),
 				Kind:       "HTTPRoute",
 			},
 		}},
 		{core.GrpcRouteType, &gwv1.GRPCRoute{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "gateway.networking.k8s.io/v1",
+				APIVersion: gwv1.GroupVersion.String(),
 				Kind:       "GRPCRoute",
 			},
 		}},
 		{core.TlsRouteType, &gwv1alpha2.TLSRoute{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "gateway.networking.k8s.io/v1alpha2",
+				APIVersion: gwv1.GroupVersion.String(),
 				Kind:       "TLSRoute",
 			},
 		}},
 	}
 
 	for _, routeInfo := range routeInfos {
-		fmt.Println("groupVersion : ", routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Group)
-		fmt.Println("kind : ", routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Kind)
-		if ok, err := k8s.IsGVKSupported(mgr, routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Group, routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Kind); !ok {
-			fmt.Printf("Route GroupKind %s is not supported, skipping controller registration\n", routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Kind)
-
+		gv := routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().GroupVersion().String()
+		kind := routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Kind
+		if ok, err := k8s.IsGVKSupported(mgr, gv, kind); !ok {
+			fmt.Printf("GVK not supported gv: %s, kind: %s", gv, kind)
+			if err != nil {
+				fmt.Printf("GVK not supported error: %s", err)
+				return nil
+			}
 		} else {
 			if err != nil {
 				return err
