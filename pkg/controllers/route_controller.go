@@ -116,13 +116,18 @@ func RegisterAllRouteControllers(
 	for _, routeInfo := range routeInfos {
 		gv := routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().GroupVersion().String()
 		kind := routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Kind
+		fmt.Printf("GVK: %s, %s", gv, kind)
+		log.Infof(context.TODO(), "GVK: %s, %s", gv, kind)
 		if ok, err := k8s.IsGVKSupported(mgr, gv, kind); !ok {
+			log.Infof(context.TODO(), "GVK not supported gv: %s, kind: %s", gv, kind)
 			fmt.Printf("GVK not supported gv: %s, kind: %s", gv, kind)
 			if err != nil {
+				log.Infof(context.TODO(), "GVK not supported error: %s", err)
 				fmt.Printf("GVK not supported error: %s", err)
 				return nil
 			}
 		} else {
+			log.Infof(context.TODO(), "GVK supported gv: %s, kind: %s", gv, kind)
 			if err != nil {
 				return err
 			}
