@@ -93,9 +93,24 @@ func RegisterAllRouteControllers(
 		routeType      core.RouteType
 		gatewayApiType client.Object
 	}{
-		{core.HttpRouteType, &gwv1.HTTPRoute{}},
-		{core.GrpcRouteType, &gwv1.GRPCRoute{}},
-		{core.TlsRouteType, &gwv1alpha2.TLSRoute{}},
+		{core.HttpRouteType, &gwv1.HTTPRoute{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "gateway.networking.k8s.io/v1",
+				Kind:       "HTTPRoute",
+			},
+		}},
+		{core.GrpcRouteType, &gwv1.GRPCRoute{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "gateway.networking.k8s.io/v1",
+				Kind:       "GRPCRoute",
+			},
+		}},
+		{core.TlsRouteType, &gwv1alpha2.TLSRoute{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "gateway.networking.k8s.io/v1alpha2",
+				Kind:       "TLSRoute",
+			},
+		}},
 	}
 
 	for _, routeInfo := range routeInfos {
