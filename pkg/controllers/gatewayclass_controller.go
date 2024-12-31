@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-application-networking-k8s/pkg/config"
+	"github.com/aws/aws-application-networking-k8s/pkg/k8s"
 	"github.com/aws/aws-application-networking-k8s/pkg/utils/gwlog"
 	"github.com/pkg/errors"
 
@@ -44,6 +45,15 @@ func RegisterGatewayClassController(log gwlog.Logger, mgr ctrl.Manager) error {
 		client:                   mgr.GetClient(),
 		scheme:                   mgr.GetScheme(),
 		latticeControllerEnabled: false,
+	}
+	ok, err := k8s.IsGVKSupported(mgr, gwv1.GroupVersion.String(), "GatewayClass")
+	if err != nil {
+		log.Infof(context.TODO(), "Failed to check if GatewayClass is supported: %s", err.Error())
+		return nil
+	}
+	if !ok {
+		log.Infof(context.TODO(), "GatewayClass is not supported, skipping controller registration")
+		return nil
 	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&gwv1.GatewayClass{}).

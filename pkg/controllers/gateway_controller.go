@@ -26,12 +26,12 @@ import (
 
 	"github.com/aws/aws-application-networking-k8s/pkg/aws"
 	"github.com/aws/aws-application-networking-k8s/pkg/config"
-	"github.com/aws/aws-application-networking-k8s/pkg/k8s"
 	"github.com/aws/aws-application-networking-k8s/pkg/model/core"
 	lattice_runtime "github.com/aws/aws-application-networking-k8s/pkg/runtime"
 	"github.com/aws/aws-application-networking-k8s/pkg/utils"
 	"github.com/aws/aws-application-networking-k8s/pkg/utils/gwlog"
 
+	"github.com/aws/aws-application-networking-k8s/pkg/k8s"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -72,14 +72,14 @@ func RegisterGatewayController(
 	scheme := mgr.GetScheme()
 	evtRec := mgr.GetEventRecorderFor("gateway")
 
-	ok, err := k8s.IsGVKSupported(mgr, gwv1.GroupVersion.String(), "GatewayClass")
+	ok, err := k8s.IsGVKSupported(mgr, gwv1.GroupVersion.String(), "Gateway")
 	if err != nil {
-		log.Infof(context.TODO(), "Failed to check if GatewayClass is supported: %s", err.Error())
-		return fmt.Errorf("failed to check if GatewayClass is supported: %w", err)
+		log.Infof(context.TODO(), "Failed to check if Gateway is supported: %s", err.Error())
+		return nil
 	}
 	if !ok {
-		log.Infof(context.TODO(), "GatewayClass is not supported, skipping controller registration")
-		return fmt.Errorf("GatewayClass is not supported, skipping controller registration")
+		log.Infof(context.TODO(), "Gateway is not supported, skipping controller registration")
+		return nil
 	}
 	r := &gatewayReconciler{
 		log:              log,

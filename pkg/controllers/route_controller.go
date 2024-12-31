@@ -85,6 +85,7 @@ func RegisterAllRouteControllers(
 	mgr ctrl.Manager,
 ) error {
 	mgrClient := mgr.GetClient()
+
 	gwEventHandler := eventhandlers.NewEnqueueRequestGatewayEvent(log, mgrClient)
 	svcEventHandler := eventhandlers.NewServiceEventHandler(log, mgrClient)
 
@@ -98,6 +99,16 @@ func RegisterAllRouteControllers(
 	}
 
 	for _, routeInfo := range routeInfos {
+		fmt.Println("groupVersion : ", routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Group)
+		fmt.Println("kind : ", routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Kind)
+		if ok, err := k8s.IsGVKSupported(mgr, routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Group, routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Kind); !ok {
+			fmt.Printf("Route GroupKind %s is not supported, skipping controller registration\n", routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Kind)
+
+		} else {
+			if err != nil {
+				return err
+			}
+		}
 		brTgBuilder := gateway.NewBackendRefTargetGroupBuilder(log, mgrClient)
 		reconciler := routeReconciler{
 			routeType:        routeInfo.routeType,
