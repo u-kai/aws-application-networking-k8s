@@ -111,7 +111,7 @@ func RegisterGatewayController(
 	builder.Watches(&gwv1.GatewayClass{}, gwClassEventHandler)
 
 	//Watch VpcAssociationPolicy CRD if it is installed
-	ok, err := k8s.IsGVKSupported(mgr, anv1alpha1.GroupVersion.String(), anv1alpha1.VpcAssociationPolicyKind)
+	ok, err = k8s.IsGVKSupported(mgr, anv1alpha1.GroupVersion.String(), anv1alpha1.VpcAssociationPolicyKind)
 	if err != nil {
 		return err
 	}
