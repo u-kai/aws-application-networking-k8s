@@ -17,10 +17,12 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
-	gwv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	"strings"
+
+	gwv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	"github.com/aws/aws-application-networking-k8s/pkg/webhook"
 	"github.com/go-logr/zapr"
@@ -45,6 +47,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/external-dns/endpoint"
 	gwv1 "sigs.k8s.io/gateway-api/apis/v1"
+
 	//+kubebuilder:scaffold:imports
 	anv1alpha1 "github.com/aws/aws-application-networking-k8s/pkg/apis/applicationnetworking/v1alpha1"
 	"github.com/aws/aws-application-networking-k8s/pkg/config"
@@ -107,6 +110,9 @@ func main() {
 	logLevel := logLevel()
 	log := gwlog.NewLogger(logLevel)
 	ctrl.SetLogger(zapr.NewLogger(log.InnerLogger.Desugar()).WithName("runtime"))
+
+	ctx := context.Background()
+	log.Infof(ctx, "log level set to %s", logLevel)
 
 	setupLog := log.InnerLogger.Named("setup")
 
