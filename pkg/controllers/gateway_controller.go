@@ -72,6 +72,15 @@ func RegisterGatewayController(
 	scheme := mgr.GetScheme()
 	evtRec := mgr.GetEventRecorderFor("gateway")
 
+	ok, err := k8s.IsGVKSupported(mgr, gwv1.GroupVersion.String(), "GatewayClass")
+	if err != nil {
+		log.Infof(context.TODO(), "Failed to check if GatewayClass is supported: %s", err.Error())
+		return fmt.Errorf("failed to check if GatewayClass is supported: %w", err)
+	}
+	if !ok {
+		log.Infof(context.TODO(), "GatewayClass is not supported, skipping controller registration")
+		return fmt.Errorf("GatewayClass is not supported, skipping controller registration")
+	}
 	r := &gatewayReconciler{
 		log:              log,
 		client:           mgrClient,

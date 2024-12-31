@@ -3,9 +3,9 @@
 # Declare variables to be passed into your templates.
 
 image:
-  repository: public.ecr.aws/aws-application-networking-k8s/aws-gateway-controller
-  tag: v1.1.0
-  pullPolicy: IfNotPresent
+  repository: 111815285043.dkr.ecr.ap-northeast-1.amazonaws.com/aws-gateway-controller
+  tag: latest
+  pullPolicy: Always
   pullSecrets: []
 
 nameOverride: ""
@@ -62,7 +62,7 @@ pdb:
 
 # log level for the controller
 log:
-  level: info
+  level: debug
 
 # Set to "namespace" to install the controller in a namespaced scope, will only
 # watch for object creation in the namespace. By default installScope is
@@ -71,16 +71,16 @@ installScope: cluster
 
 serviceAccount:
   # Specifies whether a service account should be created
-  create: true
+  create: false
   # The name of the service account to use.
-  name: gateway-api-controller
-  annotations: {}
+  annotations:
+    {}
     # eks.amazonaws.com/role-arn: arn:aws:iam::AWS_ACCOUNT_ID:role/IAM_ROLE_NAME
 
-awsRegion:
-awsAccountId:
-clusterVpcId:
-clusterName:
+awsRegion: ap-northeast-1
+awsAccountId: 111815285043
+clusterVpcId: vpc-0e24bd68af2259678
+clusterName: eks-auto-mode-sample
 defaultServiceNetwork:
 latticeEndpoint:
 webhookEnabled: true
@@ -92,3 +92,4 @@ webhookTLS:
   caCert:
   cert:
   key:
+
