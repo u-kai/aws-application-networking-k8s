@@ -29,7 +29,6 @@ import (
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap/zapcore"
 	k8swebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
-	gwv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	"github.com/aws/aws-application-networking-k8s/pkg/aws"
 	"github.com/aws/aws-application-networking-k8s/pkg/utils/gwlog"
