@@ -73,15 +73,16 @@ serviceAccount:
   # Specifies whether a service account should be created
   create: false
   # The name of the service account to use.
+  name: gateway-api-controller
   annotations:
     {}
     # eks.amazonaws.com/role-arn: arn:aws:iam::AWS_ACCOUNT_ID:role/IAM_ROLE_NAME
 
 awsRegion: ap-northeast-1
 awsAccountId: 111815285043
-clusterVpcId: vpc-0e24bd68af2259678
+clusterVpcId: vpc-0ed040bc35eac4ae6
 clusterName: eks-auto-mode-sample
-defaultServiceNetwork:
+defaultServiceNetwork: test-gateway
 latticeEndpoint:
 webhookEnabled: true
 disableTaggingServiceApi: false
@@ -92,4 +93,3 @@ webhookTLS:
   caCert:
   cert:
   key:
-
