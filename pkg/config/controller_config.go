@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -12,6 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/eks"
+	"github.com/aws/aws-sdk-go/service/sts"
 )
 
 const (
@@ -21,6 +24,7 @@ const (
 
 const (
 	REGION                          = "REGION"
+	AWS_REGION                      = "AWS_REGION"
 	CLUSTER_VPC_ID                  = "CLUSTER_VPC_ID"
 	CLUSTER_NAME                    = "CLUSTER_NAME"
 	DEFAULT_SERVICE_NETWORK         = "DEFAULT_SERVICE_NETWORK"
@@ -53,32 +57,43 @@ func ConfigInit() error {
 func configInit(sess *session.Session, metadata EC2Metadata) error {
 	var err error
 
-	DevMode = os.Getenv(DEV_MODE)
-	WebhookEnabled = os.Getenv(WEBHOOK_ENABLED)
+	var metadataErr error
+	if Region = os.Getenv(REGION); Region == "" {
+		if Region, metadataErr = metadata.Region(); metadataErr != nil {
+			if Region = os.Getenv(AWS_REGION); Region == "" {
+				return fmt.Errorf("region is not specified")
+			}
+		}
+	}
 
-	VpcID = os.Getenv(CLUSTER_VPC_ID)
-	if VpcID == "" {
-		VpcID, err = metadata.VpcID()
-		if err != nil {
+	if ClusterName = os.Getenv(CLUSTER_NAME); ClusterName == "" {
+		if ClusterName, err = getClusterName(sess, Region); err != nil {
+			return fmt.Errorf("cannot get cluster name: %s", err)
+		}
+	}
+
+	if VpcID = os.Getenv(CLUSTER_VPC_ID); VpcID == "" {
+		if metadataErr != nil {
+			if VpcID, err = fromClusterNameToVPCId(sess, ClusterName); err != nil {
+				return fmt.Errorf("vpcId is not specified: %s", err)
+			}
+		} else if VpcID, err = metadata.VpcID(); err != nil {
 			return fmt.Errorf("vpcId is not specified: %s", err)
 		}
 	}
 
-	Region = os.Getenv(REGION)
-	if Region == "" {
-		Region, err = metadata.Region()
-		if err != nil {
-			return fmt.Errorf("region is not specified: %s", err)
-		}
-	}
-
-	AccountID = os.Getenv(AWS_ACCOUNT_ID)
-	if AccountID == "" {
-		AccountID, err = metadata.AccountId()
-		if err != nil {
+	if AccountID = os.Getenv(AWS_ACCOUNT_ID); AccountID == "" {
+		if metadataErr != nil {
+			if AccountID, err = fromIdentityToAccountId(sess); err != nil {
+				return fmt.Errorf("account is not specified: %s", err)
+			}
+		} else if AccountID, err = metadata.AccountId(); err != nil {
 			return fmt.Errorf("account is not specified: %s", err)
 		}
 	}
+
+	DevMode = os.Getenv(DEV_MODE)
+	WebhookEnabled = os.Getenv(WEBHOOK_ENABLED)
 
 	DefaultServiceNetwork = os.Getenv(DEFAULT_SERVICE_NETWORK)
 
@@ -91,11 +106,6 @@ func configInit(sess *session.Session, metadata EC2Metadata) error {
 
 	if strings.ToLower(disableTaggingAPI) == "true" {
 		DisableTaggingServiceAPI = true
-	}
-
-	ClusterName, err = getClusterName(sess)
-	if err != nil {
-		return fmt.Errorf("cannot get cluster name: %s", err)
 	}
 
 	routeMaxConcurrentReconciles := os.Getenv(ROUTE_MAX_CONCURRENT_RECONCILES)
@@ -111,22 +121,13 @@ func configInit(sess *session.Session, metadata EC2Metadata) error {
 }
 
 // try to find cluster name, search in env then in ec2 instance tags
-func getClusterName(sess *session.Session) (string, error) {
-	cn := os.Getenv(CLUSTER_NAME)
-	if cn != "" {
-		return cn, nil
-	}
-	// fallback to ec2 instance tags
+func getClusterName(sess *session.Session, region string) (string, error) {
 	meta := ec2metadata.New(sess)
 	doc, err := meta.GetInstanceIdentityDocument()
 	if err != nil {
 		return "", err
 	}
 	instanceId := doc.InstanceID
-	region, err := meta.Region()
-	if err != nil {
-		return "", err
-	}
 	ec2Client := ec2.New(sess, &aws.Config{Region: aws.String(region)})
 	tagReq := &ec2.DescribeTagsInput{Filters: []*ec2.Filter{{
 		Name:   aws.String("resource-id"),
@@ -142,4 +143,28 @@ func getClusterName(sess *session.Session) (string, error) {
 		}
 	}
 	return "", errors.New("not found in env and metadata")
+}
+
+func fromClusterNameToVPCId(sess *session.Session, clusterName string) (string, error) {
+	eksClient := eks.New(sess)
+	clusterConf, err := eksClient.DescribeClusterWithContext(context.Background(), &eks.DescribeClusterInput{Name: aws.String(clusterName)})
+	if err != nil {
+		return "", err
+	}
+	if clusterConf.Cluster.ResourcesVpcConfig == nil {
+		return "", fmt.Errorf("VPC ID is not found in cluster %s", clusterName)
+	}
+	return *clusterConf.Cluster.ResourcesVpcConfig.VpcId, nil
+}
+
+func fromIdentityToAccountId(sess *session.Session) (string, error) {
+	stsClient := sts.New(sess)
+	identity, err := stsClient.GetCallerIdentityWithContext(context.Background(), &sts.GetCallerIdentityInput{})
+	if err != nil {
+		return "", err
+	}
+	if identity.Account == nil {
+		return "", fmt.Errorf("account id is not found")
+	}
+	return *identity.Account, nil
 }
