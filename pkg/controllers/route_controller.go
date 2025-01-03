@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	"github.com/pkg/errors"
@@ -116,14 +117,11 @@ func RegisterAllRouteControllers(
 	for _, routeInfo := range routeInfos {
 		gv := routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().GroupVersion().String()
 		kind := routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Kind
-		fmt.Printf("GVK: %s, %s", gv, kind)
 		log.Infof(context.TODO(), "GVK: %s, %s", gv, kind)
 		if ok, err := k8s.IsGVKSupported(mgr, gv, kind); !ok {
 			log.Infof(context.TODO(), "GVK not supported gv: %s, kind: %s", gv, kind)
-			fmt.Printf("GVK not supported gv: %s, kind: %s", gv, kind)
 			if err != nil {
 				log.Infof(context.TODO(), "GVK not supported error: %s", err)
-				fmt.Printf("GVK not supported error: %s", err)
 				return nil
 			}
 		} else {
@@ -203,6 +201,7 @@ func (r *routeReconciler) reconcile(ctx context.Context, req ctrl.Request) error
 	if err != nil {
 		return client.IgnoreNotFound(err)
 	}
+	r.log.Debugw(ctx, "u-kai reconcile after getRoute", "route", route)
 
 	if err = r.client.Get(ctx, req.NamespacedName, route.K8sObject()); err != nil {
 		return client.IgnoreNotFound(err)
@@ -389,25 +388,6 @@ func (r *routeReconciler) reconcileUpsert(ctx context.Context, req ctrl.Request,
 		return backendRefIPFamiliesErr
 	}
 
-	if _, err := r.buildAndDeployModel(ctx, route); err != nil {
-		if services.IsConflictError(err) {
-			// Stop reconciliation of this route if the route cannot be owned / has conflict
-			route.Status().UpdateParentRefs(route.Spec().ParentRefs()[0], config.LatticeGatewayControllerName)
-			route.Status().UpdateRouteCondition(metav1.Condition{
-				Type:               string(gwv1.RouteConditionAccepted),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: route.K8sObject().GetGeneration(),
-				Reason:             "Conflicted",
-				Message:            err.Error(),
-			})
-			if err = r.client.Status().Update(ctx, route.K8sObject()); err != nil {
-				return fmt.Errorf("failed to update route status for conflict due to err %w", err)
-			}
-			return nil
-		}
-		return err
-	}
-
 	r.eventRecorder.Event(route.K8sObject(), corev1.EventTypeNormal,
 		k8s.RouteEventReasonDeploySucceed, "Adding/Updating reconcile Done!")
 
@@ -574,6 +554,20 @@ func (r *routeReconciler) validateRouteParentRefs(ctx context.Context, route cor
 		if gw == nil {
 			continue // ignore status update if gw not found
 		}
+		gwClass := &gwv1.GatewayClass{}
+		gwClassName := types.NamespacedName{
+			Namespace: defaultNamespace,
+			Name:      string(gw.Spec.GatewayClassName),
+		}
+		err = r.client.Get(ctx, gwClassName, gwClass)
+		if err != nil {
+			r.ukaiLog(ctx, "Ignore Route not controlled by any GatewayClass %s, %s", route.Name(), route.Namespace())
+			continue
+		}
+		if gwClass.Spec.ControllerName != config.LatticeGatewayControllerName {
+			r.ukaiLog(ctx, "Ignore non aws-vpc-lattice Route %s, %s", route.Name(), route.Namespace())
+			continue
+		}
 
 		noMatchingParent := true
 		for _, listener := range gw.Spec.Listeners {
@@ -604,6 +598,9 @@ func (r *routeReconciler) validateRouteParentRefs(ctx context.Context, route cor
 	}
 
 	return parentStatuses, nil
+}
+func (r *routeReconciler) ukaiLog(ctx context.Context, template string, args ...interface{}) {
+	r.log.Infof(ctx, "u-kai: "+template, args...)
 }
 
 // set of valid Kinds for Route Backend References

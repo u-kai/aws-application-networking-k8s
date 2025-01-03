@@ -86,6 +86,7 @@ func (t *latticeServiceModelBuildTask) buildListeners(ctx context.Context, stack
 	}
 
 	for _, parentRef := range t.route.Spec().ParentRefs() {
+		// TODO: fix u-kai
 		if parentRef.Name != t.route.Spec().ParentRefs()[0].Name {
 			// when a service is associate to multiple service network(s), all listener config MUST be same
 			// so here we are only using the 1st gateway

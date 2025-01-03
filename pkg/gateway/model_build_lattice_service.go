@@ -124,6 +124,22 @@ func (t *latticeServiceModelBuildTask) buildLatticeService(ctx context.Context) 
 	}
 
 	for _, parentRef := range t.route.Spec().ParentRefs() {
+		gw := &gwv1.Gateway{}
+		err := t.client.Get(ctx, client.ObjectKey{Name: string(parentRef.Name), Namespace: string(*parentRef.Namespace)}, gw)
+		if err != nil {
+			t.log.Infof(ctx, "u-kai: Failed to get gateway %s-%s: %v", parentRef.Name, *parentRef.Namespace, err)
+			continue
+		}
+		gwClass := &gwv1.GatewayClass{}
+		err = t.client.Get(ctx, client.ObjectKey{Name: string(gw.Spec.GatewayClassName), Namespace: gw.Namespace}, gwClass)
+		if err != nil {
+			t.log.Infof(ctx, "u-kai: Failed to get gateway class %s-%s: %v", gw.Spec.GatewayClassName, gw.Namespace, err)
+			continue
+		}
+		if gwClass.Spec.ControllerName != config.LatticeGatewayControllerName {
+			t.log.Infof(ctx, "u-kai: Skip gateway %s-%s with controller %s", parentRef.Name, *parentRef.Namespace, gwClass.Spec.ControllerName)
+			continue
+		}
 		spec.ServiceNetworkNames = append(spec.ServiceNetworkNames, string(parentRef.Name))
 	}
 	if config.ServiceNetworkOverrideMode {
