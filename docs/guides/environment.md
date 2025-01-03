@@ -19,9 +19,9 @@ This variable is required except for EKS cluster. This needs to be specified if 
 
 **Type:** *string*
 
-**Default:** *Inferred from IMDS metadata*
+**Default:** *Inferred from IMDS metadata or CLUSTER_NAME*
 
-When running AWS Gateway API Controller outside the Kubernetes Cluster, this specifies the VPC of the cluster. This needs to be specified if IMDS is not available.
+When running AWS Gateway API Controller outside the Kubernetes Cluster, this specifies the VPC of the cluster. 
 
 ---
 
@@ -29,13 +29,13 @@ When running AWS Gateway API Controller outside the Kubernetes Cluster, this spe
 
 **Type:** *string*
 
-**Default:** *Inferred from IMDS metadata*
+**Default:** *Inferred from IMDS metadata or AWS STS GetCallerIdentity API*
 
-When running AWS Gateway API Controller outside the Kubernetes Cluster, this specifies the AWS account. This needs to be specified if IMDS is not available.
+When running AWS Gateway API Controller outside the Kubernetes Cluster, this specifies the AWS account.
 
 ---
 
-#### `REGION`
+#### `REGION` or `AWS_REGION`
 
 **Type:** *string*
 
