@@ -51,7 +51,6 @@ import (
 	"github.com/aws/aws-application-networking-k8s/pkg/k8s"
 	"github.com/aws/aws-application-networking-k8s/pkg/model/core"
 	lattice_runtime "github.com/aws/aws-application-networking-k8s/pkg/runtime"
-	"github.com/aws/aws-application-networking-k8s/pkg/utils"
 	k8sutils "github.com/aws/aws-application-networking-k8s/pkg/utils"
 	"github.com/aws/aws-application-networking-k8s/pkg/utils/gwlog"
 )
@@ -388,6 +387,25 @@ func (r *routeReconciler) reconcileUpsert(ctx context.Context, req ctrl.Request,
 		return backendRefIPFamiliesErr
 	}
 
+	if _, err := r.buildAndDeployModel(ctx, route); err != nil {
+		if services.IsConflictError(err) {
+			// Stop reconciliation of this route if the route cannot be owned / has conflict
+			route.Status().UpdateParentRefs(route.Spec().ParentRefs()[0], config.LatticeGatewayControllerName)
+			route.Status().UpdateRouteCondition(metav1.Condition{
+				Type:               string(gwv1.RouteConditionAccepted),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.K8sObject().GetGeneration(),
+				Reason:             "Conflicted",
+				Message:            err.Error(),
+			})
+			if err = r.client.Status().Update(ctx, route.K8sObject()); err != nil {
+				return fmt.Errorf("failed to update route status for conflict due to err %w", err)
+			}
+			return nil
+		}
+		return err
+	}
+
 	r.eventRecorder.Event(route.K8sObject(), corev1.EventTypeNormal,
 		k8s.RouteEventReasonDeploySucceed, "Adding/Updating reconcile Done!")
 
@@ -554,20 +572,6 @@ func (r *routeReconciler) validateRouteParentRefs(ctx context.Context, route cor
 		if gw == nil {
 			continue // ignore status update if gw not found
 		}
-		gwClass := &gwv1.GatewayClass{}
-		gwClassName := types.NamespacedName{
-			Namespace: defaultNamespace,
-			Name:      string(gw.Spec.GatewayClassName),
-		}
-		err = r.client.Get(ctx, gwClassName, gwClass)
-		if err != nil {
-			r.ukaiLog(ctx, "Ignore Route not controlled by any GatewayClass %s, %s", route.Name(), route.Namespace())
-			continue
-		}
-		if gwClass.Spec.ControllerName != config.LatticeGatewayControllerName {
-			r.ukaiLog(ctx, "Ignore non aws-vpc-lattice Route %s, %s", route.Name(), route.Namespace())
-			continue
-		}
 
 		noMatchingParent := true
 		for _, listener := range gw.Spec.Listeners {
@@ -599,12 +603,9 @@ func (r *routeReconciler) validateRouteParentRefs(ctx context.Context, route cor
 
 	return parentStatuses, nil
 }
-func (r *routeReconciler) ukaiLog(ctx context.Context, template string, args ...interface{}) {
-	r.log.Infof(ctx, "u-kai: "+template, args...)
-}
 
 // set of valid Kinds for Route Backend References
-var validBackendKinds = utils.NewSet("Service", "ServiceImport")
+var validBackendKinds = k8sutils.NewSet("Service", "ServiceImport")
 
 // validate route's backed references, will return non-accepted
 // condition if at least one backendRef not in a valid state
