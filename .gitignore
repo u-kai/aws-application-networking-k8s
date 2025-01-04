@@ -21,3 +21,4 @@ pkg/**/prog.*
 
 # Image build tarballed bundles
 *.tgz
+*.log

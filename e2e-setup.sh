@@ -1,7 +1,7 @@
-export CLASTER_VPC_ID=vpc-0ed040bc35eac4ae6
-export CLASTER_NAME=eks-auto-mode-sample
-export AWS_ACCOUNT_ID=111815285043
-export REGION=ap-northeast-1
+#export CLASTER_VPC_ID=vpc-0ed040bc35eac4ae6
+#export CLASTER_NAME=eks-auto-mode-sample
+#export AWS_ACCOUNT_ID=111815285043
+#export REGION=ap-northeast-1
 
 
 kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.2.0" | kubectl apply -f -
@@ -34,3 +34,4 @@ kubectl apply -f config/crds/bases/application-networking.k8s.aws_targetgrouppol
 kubectl apply -f config/crds/bases/application-networking.k8s.aws_vpcassociationpolicies.yaml
 kubectl apply -f config/crds/bases/application-networking.k8s.aws_accesslogpolicies.yaml
 kubectl apply -f config/crds/bases/application-networking.k8s.aws_iamauthpolicies.yaml
+kubens aws-application-networking-system

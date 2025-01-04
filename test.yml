@@ -1,0 +1,78 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: amazon-vpc-lattice
+  namespace: default
+spec:
+  controllerName: application-networking.k8s.aws/gateway-api-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: lattice-gateway
+  namespace: default
+spec:
+  gatewayClassName: amazon-vpc-lattice
+  listeners:
+    - protocol: HTTP
+      name:  http
+      port: 80
+---
+
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: test-service
+  namespace: default
+spec:
+  parentRefs:
+     - name: lattice-gateway
+       namespace: default
+       sectionName: http
+  rules:
+      - backendRefs:
+        - name: test-service
+          kind: Service
+          port: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-service
+  namespace: default
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: test-service
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-service
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: test-service
+  template:
+    metadata:
+      labels:
+        app: test-service
+    spec:
+      containers:
+        - name: test-service
+          image: "nginx:latest"
+          ports:
+            - containerPort: 80
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+---
