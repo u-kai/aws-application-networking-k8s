@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - dev
+      - main
 jobs:
   build:
     name: Build and Push to ECR with Docker Buildx Cache
