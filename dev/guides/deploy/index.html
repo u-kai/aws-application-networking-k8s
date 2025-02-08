@@ -1325,6 +1325,8 @@
 <span class="normal"><a href="#__codelineno-0-2">2</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AWS_REGION</span><span class="o">=</span>&lt;cluster_region&gt;
 <a id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">CLUSTER_NAME</span><span class="o">=</span>&lt;cluster_name&gt;
 </code></pre></div></td></tr></table></div></p>
+<p><strong>Install Gateway API CRDs</strong></p>
+<p>The latest Gateway API CRDs are available <a href="https://gateway-api.sigs.k8s.io/">here</a>. Please <a href="https://gateway-api.sigs.k8s.io/guides/#installing-gateway-api">follow this installation</a> process.</p>
 <p><strong>Create a cluster (optional)</strong></p>
 <p>You can easily create a cluster with <code>eksctl</code>, the CLI for Amazon EKS:
    <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>eksctl<span class="w"> </span>create<span class="w"> </span>cluster<span class="w"> </span>--name<span class="w"> </span><span class="nv">$CLUSTER_NAME</span><span class="w"> </span>--region<span class="w"> </span><span class="nv">$AWS_REGION</span>

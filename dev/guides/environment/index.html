@@ -855,9 +855,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#region-or-aws_region" class="md-nav__link">
+  <a href="#region" class="md-nav__link">
     <span class="md-ellipsis">
-      REGION or AWS_REGION
+      REGION
     </span>
   </a>
   
@@ -1395,15 +1395,15 @@ This variable is required except for EKS cluster. This needs to be specified if 
 <hr />
 <h4 id="cluster_vpc_id"><code>CLUSTER_VPC_ID</code><a class="headerlink" href="#cluster_vpc_id" title="Permanent link">&para;</a></h4>
 <p><strong>Type:</strong> <em>string</em></p>
-<p><strong>Default:</strong> <em>Inferred from IMDS metadata or CLUSTER_NAME</em></p>
-<p>When running AWS Gateway API Controller outside the Kubernetes Cluster, this specifies the VPC of the cluster. </p>
+<p><strong>Default:</strong> <em>Inferred from IMDS metadata</em></p>
+<p>When running AWS Gateway API Controller outside the Kubernetes Cluster, this specifies the VPC of the cluster. This needs to be specified if IMDS is not available.</p>
 <hr />
 <h4 id="aws_account_id"><code>AWS_ACCOUNT_ID</code><a class="headerlink" href="#aws_account_id" title="Permanent link">&para;</a></h4>
 <p><strong>Type:</strong> <em>string</em></p>
-<p><strong>Default:</strong> <em>Inferred from IMDS metadata or AWS STS GetCallerIdentity API</em></p>
-<p>When running AWS Gateway API Controller outside the Kubernetes Cluster, this specifies the AWS account.</p>
+<p><strong>Default:</strong> <em>Inferred from IMDS metadata</em></p>
+<p>When running AWS Gateway API Controller outside the Kubernetes Cluster, this specifies the AWS account. This needs to be specified if IMDS is not available.</p>
 <hr />
-<h4 id="region-or-aws_region"><code>REGION</code> or <code>AWS_REGION</code><a class="headerlink" href="#region-or-aws_region" title="Permanent link">&para;</a></h4>
+<h4 id="region"><code>REGION</code><a class="headerlink" href="#region" title="Permanent link">&para;</a></h4>
 <p><strong>Type:</strong> <em>string</em></p>
 <p><strong>Default:</strong> <em>Inferred from IMDS metadata</em></p>
 <p>When running AWS Gateway API Controller outside the Kubernetes Cluster, this specifies the AWS Region of VPC Lattice Service endpoint. This needs to be specified if IMDS is not available.</p>

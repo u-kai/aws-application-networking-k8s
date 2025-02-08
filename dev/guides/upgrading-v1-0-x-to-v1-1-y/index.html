@@ -1251,12 +1251,12 @@
 
 <h1 id="update-the-aws-gateway-api-controller-from-v10x-to-v11y">Update the AWS Gateway API Controller from v1.0.x to v1.1.y<a class="headerlink" href="#update-the-aws-gateway-api-controller-from-v10x-to-v11y" title="Permanent link">&para;</a></h1>
 <p>Release <code>v1.1.0</code> of the AWS Gateway API Controller is built against <code>v1.2</code> of the Gateway API spec, but the controller is also compatible with the <code>v1.1</code> Gateway API. It is <em>not</em> compatible the <code>v1.0</code> Gateway API.</p>
-<p>Previous <code>v1.0.x</code> builds of the controller were built against <code>v1.0</code> of the Gateway API spec. This guide outlines the controller upgrade process from <code>v1.0.x</code> to <code>v1.1.y</code>.</p>
+<p>Previous <code>v1.0.x</code> builds of the controller were built against <code>v1.0</code> of the Gateway API spec. This guide outlines the controller upgrade process from <code>v1.0.x</code> to <code>v1.1.y</code>. Please note that users are required to install Gateway API CRDs themselves as these are no longer bundled as of release <code>v1.1.0</code>. The latest Gateway API CRDs are available <a href="https://gateway-api.sigs.k8s.io/">here</a>. Please <a href="https://gateway-api.sigs.k8s.io/guides/#installing-gateway-api">follow this installation</a> process.</p>
 <h1 id="basic-upgrade-process">Basic Upgrade Process<a class="headerlink" href="#basic-upgrade-process" title="Permanent link">&para;</a></h1>
 <ol>
 <li>Back up configuration, in particular GRPCRoute objects</li>
 <li>Disable <code>v1.0.x</code> controller (e.g. scale to zero)</li>
-<li>Update Gateway API CRDs to <code>v1.1.0</code></li>
+<li>Update Gateway API CRDs to <code>v1.1.0</code>, available <a href="https://gateway-api.sigs.k8s.io/">here</a></li>
 <li>Deploy and launch <code>v1.1.y</code> controller version</li>
 </ol>
 <p>With the basic upgrade process, previously created GRPCRoutes on <code>v1alpha2</code> will automatically update to <code>v1</code> once they are reconciled by the controller. Alternatively, you can manually update your GRPCRoute versions (for example export to YAML, update version number, and apply updates). Creation of new GRPCRoutes objects using <code>v1alpha2</code> will be rejected.</p>
@@ -1265,7 +1265,7 @@
 <ol>
 <li>Back up configuration, in particular GRPCRoute objects</li>
 <li>Disable <code>v1.0.x</code> controller (e.g. scale to zero)</li>
-<li>Update Gateway API CRDs to <code>v1.1.0</code></li>
+<li>Update Gateway API CRDs to <code>v1.1.0</code>, available <a href="https://gateway-api.sigs.k8s.io/">here</a></li>
 <li>Deploy and launch <code>v1.1.Y</code> controller version</li>
 <li>Take upgrade steps outlined in <code>v1.2.0</code> <a href="https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.2.0">Gateway API release notes</a></li>
 <li>Update Gateway API CRDs to <code>v1.2.0</code></li>
