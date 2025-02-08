@@ -4,9 +4,9 @@ permissions:
   contents: read
 on:
   # TODO: Find a secure enough way to run e2e tests from PR on-demand.
-  push:
-    branches:
-      - main
+  #push:
+  #  branches:
+  #    - main
   workflow_dispatch:
 jobs:
   e2e-test:

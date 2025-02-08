@@ -125,15 +125,20 @@ func (t *latticeServiceModelBuildTask) buildLatticeService(ctx context.Context) 
 
 	for _, parentRef := range t.route.Spec().ParentRefs() {
 		gw := &gwv1.Gateway{}
-		err := t.client.Get(ctx, client.ObjectKey{Name: string(parentRef.Name), Namespace: string(*parentRef.Namespace)}, gw)
+		t.log.Debugf(ctx, "Getting gateway %s-%v", parentRef.Name, parentRef.Namespace)
+		parentNamespace := t.route.Namespace()
+		if parentRef.Namespace != nil {
+			parentNamespace = string(*parentRef.Namespace)
+		}
+		err := t.client.Get(ctx, client.ObjectKey{Name: string(parentRef.Name), Namespace: parentNamespace}, gw)
 		if err != nil {
-			t.log.Infof(ctx, "u-kai: Failed to get gateway %s-%s: %v", parentRef.Name, *parentRef.Namespace, err)
+			t.log.Infof(ctx, "u-kai: Failed to get gateway %s-%s: %v", parentRef.Name, parentNamespace, err)
 			continue
 		}
 		gwClass := &gwv1.GatewayClass{}
-		err = t.client.Get(ctx, client.ObjectKey{Name: string(gw.Spec.GatewayClassName), Namespace: gw.Namespace}, gwClass)
+		err = t.client.Get(ctx, client.ObjectKey{Name: string(gw.Spec.GatewayClassName)}, gwClass)
 		if err != nil {
-			t.log.Infof(ctx, "u-kai: Failed to get gateway class %s-%s: %v", gw.Spec.GatewayClassName, gw.Namespace, err)
+			t.log.Infof(ctx, "u-kai: Failed to get gateway class %s-%s: %v", gw.Spec.GatewayClassName, "default", err)
 			continue
 		}
 		if gwClass.Spec.ControllerName != config.LatticeGatewayControllerName {

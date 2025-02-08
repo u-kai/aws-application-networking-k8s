@@ -114,21 +114,6 @@ func RegisterAllRouteControllers(
 	}
 
 	for _, routeInfo := range routeInfos {
-		gv := routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().GroupVersion().String()
-		kind := routeInfo.gatewayApiType.GetObjectKind().GroupVersionKind().Kind
-		log.Infof(context.TODO(), "GVK: %s, %s", gv, kind)
-		if ok, err := k8s.IsGVKSupported(mgr, gv, kind); !ok {
-			log.Infof(context.TODO(), "GVK not supported gv: %s, kind: %s", gv, kind)
-			if err != nil {
-				log.Infof(context.TODO(), "GVK not supported error: %s", err)
-				return nil
-			}
-		} else {
-			log.Infof(context.TODO(), "GVK supported gv: %s, kind: %s", gv, kind)
-			if err != nil {
-				return err
-			}
-		}
 		brTgBuilder := gateway.NewBackendRefTargetGroupBuilder(log, mgrClient)
 		reconciler := routeReconciler{
 			routeType:        routeInfo.routeType,
@@ -200,8 +185,6 @@ func (r *routeReconciler) reconcile(ctx context.Context, req ctrl.Request) error
 	if err != nil {
 		return client.IgnoreNotFound(err)
 	}
-	r.log.Debugw(ctx, "u-kai reconcile after getRoute", "route", route)
-
 	if err = r.client.Get(ctx, req.NamespacedName, route.K8sObject()); err != nil {
 		return client.IgnoreNotFound(err)
 	}
@@ -293,8 +276,7 @@ func (r *routeReconciler) isRouteRelevant(ctx context.Context, route core.Route)
 	// make sure gateway is an aws-vpc-lattice
 	gwClass := &gwv1.GatewayClass{}
 	gwClassName := types.NamespacedName{
-		Namespace: defaultNamespace,
-		Name:      string(gw.Spec.GatewayClassName),
+		Name: string(gw.Spec.GatewayClassName),
 	}
 
 	if err := r.client.Get(ctx, gwClassName, gwClass); err != nil {

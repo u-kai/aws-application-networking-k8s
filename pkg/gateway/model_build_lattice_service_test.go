@@ -2,6 +2,9 @@ package gateway
 
 import (
 	"context"
+	"testing"
+
+	"github.com/aws/aws-application-networking-k8s/pkg/config"
 	"github.com/aws/aws-application-networking-k8s/pkg/k8s"
 	"github.com/aws/aws-application-networking-k8s/pkg/model/core"
 	model "github.com/aws/aws-application-networking-k8s/pkg/model/lattice"
@@ -13,7 +16,6 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	testclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	gwv1 "sigs.k8s.io/gateway-api/apis/v1"
-	"testing"
 )
 
 func Test_LatticeServiceModelBuild(t *testing.T) {
@@ -52,7 +54,8 @@ func Test_LatticeServiceModelBuild(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		gw            gwv1.Gateway
+		gw            []gwv1.Gateway
+		gwClass       gwv1.GatewayClass
 		route         core.Route
 		wantErrIsNil  bool
 		wantIsDeleted bool
@@ -62,10 +65,23 @@ func Test_LatticeServiceModelBuild(t *testing.T) {
 			name:          "Add LatticeService with hostname",
 			wantIsDeleted: false,
 			wantErrIsNil:  true,
-			gw: gwv1.Gateway{
+			gwClass: gwv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway1",
-					Namespace: "default",
+					Name: "gwClass1",
+				},
+				Spec: gwv1.GatewayClassSpec{
+					ControllerName: config.LatticeGatewayControllerName,
+				},
+			},
+			gw: []gwv1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway1",
+						Namespace: "default",
+					},
+					Spec: gwv1.GatewaySpec{
+						GatewayClassName: "gwClass1",
+					},
 				},
 			},
 			route: core.NewHTTPRoute(gwv1.HTTPRoute{
@@ -102,10 +118,23 @@ func Test_LatticeServiceModelBuild(t *testing.T) {
 			name:          "Add LatticeService",
 			wantIsDeleted: false,
 			wantErrIsNil:  true,
-			gw: gwv1.Gateway{
+			gwClass: gwv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway1",
-					Namespace: "default",
+					Name: "gwClass1",
+				},
+				Spec: gwv1.GatewayClassSpec{
+					ControllerName: config.LatticeGatewayControllerName,
+				},
+			},
+			gw: []gwv1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway1",
+						Namespace: "default",
+					},
+					Spec: gwv1.GatewaySpec{
+						GatewayClassName: "gwClass1",
+					},
 				},
 			},
 			route: core.NewHTTPRoute(gwv1.HTTPRoute{
@@ -137,10 +166,23 @@ func Test_LatticeServiceModelBuild(t *testing.T) {
 			name:          "Add LatticeService with GRPCRoute",
 			wantIsDeleted: false,
 			wantErrIsNil:  true,
-			gw: gwv1.Gateway{
+			gwClass: gwv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway1",
-					Namespace: "test",
+					Name: "gwClass1",
+				},
+				Spec: gwv1.GatewayClassSpec{
+					ControllerName: config.LatticeGatewayControllerName,
+				},
+			},
+			gw: []gwv1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway1",
+						Namespace: "test",
+					},
+					Spec: gwv1.GatewaySpec{
+						GatewayClassName: "gwClass1",
+					},
 				},
 			},
 			route: core.NewGRPCRoute(gwv1.GRPCRoute{
@@ -171,17 +213,28 @@ func Test_LatticeServiceModelBuild(t *testing.T) {
 			name:          "Delete LatticeService",
 			wantIsDeleted: true,
 			wantErrIsNil:  true,
-			gw: gwv1.Gateway{
+			gwClass: gwv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway2",
-					Namespace: "ns1",
+					Name: "gwClass1",
 				},
-				Spec: gwv1.GatewaySpec{
-					Listeners: []gwv1.Listener{
-						{
-							Name:     httpSectionName,
-							Port:     80,
-							Protocol: "HTTP",
+				Spec: gwv1.GatewayClassSpec{
+					ControllerName: config.LatticeGatewayControllerName,
+				},
+			},
+			gw: []gwv1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway2",
+						Namespace: "ns1",
+					},
+					Spec: gwv1.GatewaySpec{
+						GatewayClassName: "gwClass1",
+						Listeners: []gwv1.Listener{
+							{
+								Name:     httpSectionName,
+								Port:     80,
+								Protocol: "HTTP",
+							},
 						},
 					},
 				},
@@ -229,22 +282,33 @@ func Test_LatticeServiceModelBuild(t *testing.T) {
 			name:          "Service with customer Cert ARN",
 			wantIsDeleted: false,
 			wantErrIsNil:  true,
-			gw: gwv1.Gateway{
+			gwClass: gwv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway1",
-					Namespace: "default",
+					Name: "gwClass1",
 				},
-				Spec: gwv1.GatewaySpec{
-					Listeners: []gwv1.Listener{
-						{
-							Name:     "tls",
-							Port:     443,
-							Protocol: "HTTPS",
-							TLS: &gwv1.GatewayTLSConfig{
-								Mode:            &tlsModeTerminate,
-								CertificateRefs: nil,
-								Options: map[gwv1.AnnotationKey]gwv1.AnnotationValue{
-									"application-networking.k8s.aws/certificate-arn": "cert-arn",
+				Spec: gwv1.GatewayClassSpec{
+					ControllerName: config.LatticeGatewayControllerName,
+				},
+			},
+			gw: []gwv1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway1",
+						Namespace: "default",
+					},
+					Spec: gwv1.GatewaySpec{
+						GatewayClassName: "gwClass1",
+						Listeners: []gwv1.Listener{
+							{
+								Name:     "tls",
+								Port:     443,
+								Protocol: "HTTPS",
+								TLS: &gwv1.GatewayTLSConfig{
+									Mode:            &tlsModeTerminate,
+									CertificateRefs: nil,
+									Options: map[gwv1.AnnotationKey]gwv1.AnnotationValue{
+										"application-networking.k8s.aws/certificate-arn": "cert-arn",
+									},
 								},
 							},
 						},
@@ -279,11 +343,25 @@ func Test_LatticeServiceModelBuild(t *testing.T) {
 			},
 		},
 		{
+			//TODO: 見直すことGWClassって本当に必要？
 			name: "GW does not exist",
-			gw: gwv1.Gateway{
+			gwClass: gwv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway1",
-					Namespace: "default",
+					Name: "gwClass1",
+				},
+				Spec: gwv1.GatewayClassSpec{
+					ControllerName: config.LatticeGatewayControllerName,
+				},
+			},
+			gw: []gwv1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway1",
+						Namespace: "default",
+					},
+					Spec: gwv1.GatewaySpec{
+						GatewayClassName: "gwClass1",
+					},
 				},
 			},
 			route: core.NewHTTPRoute(gwv1.HTTPRoute{
@@ -308,20 +386,31 @@ func Test_LatticeServiceModelBuild(t *testing.T) {
 			name:          "Service with TLS section but no cert arn",
 			wantIsDeleted: false,
 			wantErrIsNil:  true,
-			gw: gwv1.Gateway{
+			gwClass: gwv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway1",
-					Namespace: "default",
+					Name: "gwClass1",
 				},
-				Spec: gwv1.GatewaySpec{
-					Listeners: []gwv1.Listener{
-						{
-							Name:     "tls",
-							Port:     443,
-							Protocol: "HTTPS",
-							TLS: &gwv1.GatewayTLSConfig{
-								Mode:            &tlsModeTerminate,
-								CertificateRefs: nil,
+				Spec: gwv1.GatewayClassSpec{
+					ControllerName: config.LatticeGatewayControllerName,
+				},
+			},
+			gw: []gwv1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway1",
+						Namespace: "default",
+					},
+					Spec: gwv1.GatewaySpec{
+						GatewayClassName: "gwClass1",
+						Listeners: []gwv1.Listener{
+							{
+								Name:     "tls",
+								Port:     443,
+								Protocol: "HTTPS",
+								TLS: &gwv1.GatewayTLSConfig{
+									Mode:            &tlsModeTerminate,
+									CertificateRefs: nil,
+								},
 							},
 						},
 					},
@@ -357,10 +446,32 @@ func Test_LatticeServiceModelBuild(t *testing.T) {
 			name:          "Multiple service networks",
 			wantIsDeleted: false,
 			wantErrIsNil:  true,
-			gw: gwv1.Gateway{
+			gwClass: gwv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway1",
-					Namespace: "default",
+					Name: "gwClass1",
+				},
+				Spec: gwv1.GatewayClassSpec{
+					ControllerName: config.LatticeGatewayControllerName,
+				},
+			},
+			gw: []gwv1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway1",
+						Namespace: "default",
+					},
+					Spec: gwv1.GatewaySpec{
+						GatewayClassName: "gwClass1",
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway2",
+						Namespace: "ns2",
+					},
+					Spec: gwv1.GatewaySpec{
+						GatewayClassName: "gwClass1",
+					},
 				},
 			},
 			route: core.NewHTTPRoute(gwv1.HTTPRoute{
@@ -392,6 +503,67 @@ func Test_LatticeServiceModelBuild(t *testing.T) {
 				ServiceNetworkNames: []string{"gateway1", "gateway2"},
 			},
 		},
+		{
+			name:          "Route has multiple parents, one of which is not a Lattice gateway",
+			wantIsDeleted: false,
+			wantErrIsNil:  true,
+			gwClass: gwv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "gwClass1",
+				},
+				Spec: gwv1.GatewayClassSpec{
+					ControllerName: config.LatticeGatewayControllerName,
+				},
+			},
+			gw: []gwv1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway1",
+						Namespace: "default",
+					},
+					Spec: gwv1.GatewaySpec{
+						GatewayClassName: "gwClass1",
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "not-lattice-gateway",
+						Namespace: "ns2",
+					},
+					Spec: gwv1.GatewaySpec{
+						GatewayClassName: "not-lattice",
+					},
+				},
+			},
+			route: core.NewHTTPRoute(gwv1.HTTPRoute{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "service1",
+					Namespace: "default",
+				},
+				Spec: gwv1.HTTPRouteSpec{
+					CommonRouteSpec: gwv1.CommonRouteSpec{
+						ParentRefs: []gwv1.ParentReference{
+							{
+								Name:      "gateway1",
+								Namespace: namespacePtr("default"),
+							},
+							{
+								Name:      "not-lattice-gateway",
+								Namespace: namespacePtr("ns2"),
+							},
+						},
+					},
+				},
+			}),
+			expected: model.ServiceSpec{
+				ServiceTagFields: model.ServiceTagFields{
+					RouteName:      "service1",
+					RouteNamespace: "default",
+					RouteType:      core.HttpRouteType,
+				},
+				ServiceNetworkNames: []string{"gateway1"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -405,7 +577,10 @@ func Test_LatticeServiceModelBuild(t *testing.T) {
 			gwv1.Install(k8sSchema)
 			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 
-			assert.NoError(t, k8sClient.Create(ctx, tt.gw.DeepCopy()))
+			assert.NoError(t, k8sClient.Create(ctx, tt.gwClass.DeepCopy()))
+			for _, gw := range tt.gw {
+				assert.NoError(t, k8sClient.Create(ctx, gw.DeepCopy()))
+			}
 			stack := core.NewDefaultStack(core.StackID(k8s.NamespacedName(tt.route.K8sObject())))
 
 			task := &latticeServiceModelBuildTask{

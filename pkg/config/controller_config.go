@@ -67,6 +67,9 @@ func configInit(sess *session.Session, metadata EC2Metadata) error {
 	}
 
 	if ClusterName = os.Getenv(CLUSTER_NAME); ClusterName == "" {
+		if sess == nil {
+			return fmt.Errorf("cluster name is not specified")
+		}
 		if ClusterName, err = getClusterName(sess, Region); err != nil {
 			return fmt.Errorf("cannot get cluster name: %s", err)
 		}
