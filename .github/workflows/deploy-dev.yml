@@ -3,9 +3,6 @@ name: Build and Deploy Apps
 on:
   workflow_dispatch:
   push:
-    branches:
-      - dev
-      - main
 jobs:
   build:
     name: Build and Push to ECR with Docker Buildx Cache
